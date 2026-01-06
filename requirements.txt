@@ -1,0 +1,6 @@
+web3
+python-dotenv
+requests
+eth-abi
+eth-utils
+discord.py

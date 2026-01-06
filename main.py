@@ -26,8 +26,8 @@ bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)  # Di
 
 # Hardcoded Guild ID, channel ID. # Add duplicate identical lines underneith for addiotnal guilds and channels.
 designated_channels = {
-    # 885764705526882335: 911280330567208971,  #beets
-    1458036437911077030: 1458036438359605251, #test
+    885764705526882335: 911280330567208971,  #beets
+    # 1458036437911077030: 1458036438359605251, #test
 }
 
 # Daily report anchor (UTC)

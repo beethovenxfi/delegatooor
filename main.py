@@ -97,7 +97,7 @@ async def periodic_recheck():
     global paused, LAST_DAILY_REPORT_DATE
 
     full_report = None  # initialize so the finally block can reference this safely even if an earlier error occurs
-    await broadcast_message("⏳ Performing periodic recheck of deposits and transactions...")
+    print(f"Performing periodic recheck of deposits and transactions...")
 
     try:
         alert_triggered, deposit_message, _, _ = await run_deposit_probe()

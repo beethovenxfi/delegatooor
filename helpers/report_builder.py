@@ -103,11 +103,11 @@ def compose_full_report(
         total_available_tokens = total_pending_tokens - float(staking_balance)
 
         # Headroom message
-        if total_available_tokens < 1_000_000:
+        if total_available_tokens < 100_000:
             full_report += (
                 "\n\n"
                 f"⚠️ **Warning:** The token staking headroom (total pending - staking contract balance) "
-                f"has dropped below 1 million.\n"
+                f"has dropped below 100,000.\n"
                 f"**Current Headroom:** {total_available_tokens} S tokens\n"
                 f"<@538717564067381249> please queue up more transactions."
             )

@@ -74,16 +74,19 @@ def register_boring_commands(
 
             # Deposit probe (always run)
             alert_triggered, deposit_report_message, _, _ = await run_deposit_probe()
+            print(f"Deposit probe complete. Alert triggered: {alert_triggered}")
             if alert_triggered:
                 set_paused(True)
 
             # Staking balance + transactions
             staking_balance = await asyncio.to_thread(get_staking_balance)
             staking_balance = round(staking_balance, 1) if staking_balance else 0.0
+            print(f"Staking Contract Balance: {staking_balance} S tokens")
 
             transactions_all = await asyncio.to_thread(fetch_recent_transactions)
             transactions = filter_and_sort_pending_transactions(transactions_all)
-            
+            print(f"Pending transactions found: {len(transactions)}")
+
             if not transactions:
                 await ctx.send(deposit_report_message + "\n\n📌 No pending transactions found.")
                 return
@@ -108,12 +111,13 @@ def register_boring_commands(
                     "Rechecks and reports will continue."
                 )
 
+            print(f"Report built. Paused: {get_paused()}. Sending report...")
             for part in split_long_message(report_text):
                 await ctx.send(part)
 
         except Exception as e:
             await ctx.send(f"❌ An error occurred while generating the report: {e}")
-            print(f"Error: {e}")
+            print(f"Error in !report command: {e}")
 
     # ---------------- HISTORY ----------------
 

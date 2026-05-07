@@ -66,7 +66,9 @@ def compose_full_report(
             "0xa01Bfd7F1Be1ccF81A02CF7D722c30bDCc029718": 258369063124860928,
         }
 
+    print(f"Composing report with {len(transactions)} transactions and staking balance {staking_balance}...")
     pending = filter_and_sort_pending_transactions(transactions or [])
+    print(f"Filtered down to {len(pending)} pending transactions for the report.")
 
     # 1) Payload
     payload = {

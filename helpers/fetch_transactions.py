@@ -58,7 +58,7 @@ def filter_and_sort_pending_transactions(transactions):
             continue
         
         # Ignore transactions that somehow are still returned by the API.
-        if tx["nonce"] in [584]:
+        if tx["nonce"] in ["584"]:
             latest_transactions[tx["nonce"]] = tx
             continue            
 

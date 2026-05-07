@@ -121,12 +121,11 @@ def compose_full_report(
                 if address not in signed_addresses:
                     missing_signatures.setdefault(discord_id, []).append(tx["nonce"])
 
-    if missing_signatures:
+    if missing_signatures and ping_missing_signers:
         lines = ["⚠️ **Warning:** The following transactions are missing signatures:"]
         for discord_id, nonces in missing_signatures.items():
             nonces_str = ", ".join(map(str, sorted(nonces)))
-            if ping_missing_signers:
-                lines.append(f"- <@{discord_id}>: Nonce(s) {nonces_str}")
+            lines.append(f"- <@{discord_id}>: Nonce(s) {nonces_str}")
         full_report += "\n\n" + "\n".join(lines)
 
     return full_report

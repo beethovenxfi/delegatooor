@@ -68,9 +68,9 @@ def register_boring_commands(
     @bot.command(name="report")
     async def report(ctx: commands.Context):
         """Fetch and send a transaction report."""
+        print("📢 Fetching transaction data with REPORT command...")
         try:
             await ctx.send("📢 Fetching transaction data...")
-            print("📢 Fetching transaction data with REPORT command...")
 
             # Deposit probe (always run)
             alert_triggered, deposit_report_message, _, _ = await run_deposit_probe()

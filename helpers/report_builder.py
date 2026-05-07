@@ -127,8 +127,6 @@ def compose_full_report(
             nonces_str = ", ".join(map(str, sorted(nonces)))
             if ping_missing_signers:
                 lines.append(f"- <@{discord_id}>: Nonce(s) {nonces_str}")
-            else:
-                lines.append(f"- Signer {discord_id}: Nonce(s) {nonces_str}")
         full_report += "\n\n" + "\n".join(lines)
 
     return full_report

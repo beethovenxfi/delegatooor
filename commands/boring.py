@@ -81,7 +81,9 @@ def register_boring_commands(
             staking_balance = await asyncio.to_thread(get_staking_balance)
             staking_balance = round(staking_balance, 1) if staking_balance else 0.0
 
-            transactions = await asyncio.to_thread(fetch_recent_transactions)
+            transactions_all = await asyncio.to_thread(fetch_recent_transactions)
+            transactions = filter_and_sort_pending_transactions(transactions_all)
+            
             if not transactions:
                 await ctx.send(deposit_report_message + "\n\n📌 No pending transactions found.")
                 return

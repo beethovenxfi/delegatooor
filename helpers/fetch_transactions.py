@@ -48,8 +48,11 @@ def filter_and_sort_pending_transactions(transactions):
     Only retain the newest pending transaction (based on submissionDate) for each nonce.
     """
     latest_transactions = {}
+    
+    print(f"Filtering and sorting transactions. Total fetched: {len(transactions)}")
 
     for tx in transactions:
+               
         print(f"Processing transaction - Nonce: {tx['nonce']}, Signatures: {tx['signature_count']}/{tx['confirmations_required']}, Executed: {tx['isExecuted']}")
 
         # Ignore executed transactions and remove all others with the same nonce

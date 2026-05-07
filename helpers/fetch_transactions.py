@@ -56,6 +56,11 @@ def filter_and_sort_pending_transactions(transactions):
             # Mark this nonce as executed and remove any existing pending transactions for it
             latest_transactions[tx["nonce"]] = tx
             continue
+        
+        # Ignore transactions that somehow are still returned by the API.
+        if tx["nonce"] in [584]:
+            latest_transactions[tx["nonce"]] = tx
+            continue            
 
         # Only add the newest pending transaction for each nonce
         if tx["nonce"] not in latest_transactions or \

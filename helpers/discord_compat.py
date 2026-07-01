@@ -16,6 +16,12 @@ class InteractionCtx:
         self.interaction = interaction
 
     async def send(self, content=None, *, embed=None, file=None, **kwargs):
-        return await self.interaction.followup.send(
-            content=content, embed=embed, file=file, **kwargs
-        )
+        # Only forward args that were actually supplied. Passing embed=None / file=None
+        # explicitly makes discord.py try to serialize None as an attachment and crash.
+        if content is not None:
+            kwargs["content"] = content
+        if embed is not None:
+            kwargs["embed"] = embed
+        if file is not None:
+            kwargs["file"] = file
+        return await self.interaction.followup.send(**kwargs)

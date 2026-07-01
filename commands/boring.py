@@ -1,10 +1,12 @@
 # commands/boring.py
 import discord
 from discord.ext import commands
+from discord import app_commands
 import asyncio
 
 # These two are safe direct imports (helpers module; no cycles)
 from helpers.deposit_monitor import check_large_deposits_custom, fetch_all_deposits_custom
+from helpers.discord_compat import InteractionCtx
 
 def register_boring_commands(
     bot: commands.Bot,
@@ -24,9 +26,11 @@ def register_boring_commands(
     
     # ---------------- HELP ----------------
 
-    @bot.command(name="help")
-    async def custom_help(ctx: commands.Context):
+    @bot.tree.command(name="help", description="Show the command list.")
+    async def custom_help(interaction: discord.Interaction):
         """Custom Help Command with Thumbnail and Embed Image"""
+        await interaction.response.defer()
+        ctx = InteractionCtx(interaction)
         embed = discord.Embed(
             title="📜 \u2003**Command List**\u2003 📜",
             description="\u200b",
@@ -34,40 +38,46 @@ def register_boring_commands(
         )
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1333959203638874203/1334038056927494184/better_vizard_fire.png?ex=679b1342&is=6799c1c2&hm=9df98ede7f3eaff3df9b1f79cc737814cb79c88314bb7cc61c48d9ea86592f5e&")
 
-        embed.add_field(name="📢 \u2003!report",  value="Fetch and send a transaction report.", inline=False)
-        embed.add_field(name="⏸️ \u2003!pause",   value="Pause automated transaction execution.", inline=False)
-        embed.add_field(name="▶️ \u2003!resume",  value="Resume automated transaction execution.", inline=False)
-        embed.add_field(name="⚔️ \u2003!execute", value="Execute lowest nonce. Respects pause state, token balance and payload data.", inline=False)
-        embed.add_field(name="⚡ \u2003!shikai",   value="Execute lowest nonce, ignores pause state.", inline=False)
-        embed.add_field(name="🔥 \u2003!bankai",  value="Execute lowest nonce, ignores pause state and token balance.", inline=False)
-        embed.add_field(name="💀 \u2003!shukai9000", value="Ultimate execution weapon. ignores ALL checks (pause, balance, data).", inline=False)
-        embed.add_field(name="🕒 \u2003!history", value="Scan large deposits for a past-hours window (no alerts triggered).", inline=False)
-        embed.add_field(name="📄 \u2003!deposits", value="Export ALL deposits in a past-hours window to CSV.", inline=False)
+        embed.add_field(name="📢 \u2003/report",  value="Fetch and send a transaction report.", inline=False)
+        embed.add_field(name="⏸️ \u2003/pause",   value="Pause automated transaction execution.", inline=False)
+        embed.add_field(name="▶️ \u2003/resume",  value="Resume automated transaction execution.", inline=False)
+        embed.add_field(name="⚔️ \u2003/execute", value="Execute lowest nonce. Respects pause state, token balance and payload data.", inline=False)
+        embed.add_field(name="⚡ \u2003/shikai",   value="Execute lowest nonce, ignores pause state.", inline=False)
+        embed.add_field(name="🔥 \u2003/bankai",  value="Execute lowest nonce, ignores pause state and token balance.", inline=False)
+        embed.add_field(name="💀 \u2003/shukai9000", value="Ultimate execution weapon. ignores ALL checks (pause, balance, data).", inline=False)
+        embed.add_field(name="🕒 \u2003/history", value="Scan large deposits for a past-hours window (no alerts triggered).", inline=False)
+        embed.add_field(name="📄 \u2003/deposits", value="Export ALL deposits in a past-hours window to CSV.", inline=False)
 
         embed.set_image(url="https://cdn.discordapp.com/attachments/1333959203638874203/1333963513177178204/beets_bleach.png?ex=679acdd5&is=67997c55&hm=eefc8ec5228ca7f64f2040ee8b112e99aaee90682def455f03018e1e5afd9125&")
         await ctx.send(embed=embed)
 
     # ---------------- PAUSE / RESUME ----------------
 
-    @bot.command(name="pause")
-    async def pause(ctx: commands.Context):
+    @bot.tree.command(name="pause", description="Pause automated transaction execution.")
+    async def pause(interaction: discord.Interaction):
         """Pause automated transaction execution."""
+        await interaction.response.defer()
+        ctx = InteractionCtx(interaction)
         set_paused(True)
         await ctx.send("⏸️ Automated transaction execution has been paused. Rechecks and reports will continue.")
         print("Transaction execution paused.")
 
-    @bot.command(name="resume")
-    async def resume(ctx: commands.Context):
+    @bot.tree.command(name="resume", description="Resume automated transaction execution.")
+    async def resume(interaction: discord.Interaction):
         """Resume automated transaction execution."""
+        await interaction.response.defer()
+        ctx = InteractionCtx(interaction)
         set_paused(False)
         await ctx.send("▶️ Automated transaction execution has been resumed.")
         print("Transaction execution resumed.")
 
     # ---------------- REPORT ----------------
 
-    @bot.command(name="report")
-    async def report(ctx: commands.Context):
+    @bot.tree.command(name="report", description="Fetch and send a transaction report.")
+    async def report(interaction: discord.Interaction):
         """Fetch and send a transaction report."""
+        await interaction.response.defer()
+        ctx = InteractionCtx(interaction)
         print("📢 Fetching transaction data with REPORT command...")
         try:
             await ctx.send("📢 Fetching transaction data...")
@@ -121,13 +131,16 @@ def register_boring_commands(
 
     # ---------------- HISTORY ----------------
 
-    @bot.command(name="history")
-    async def historical_report(ctx: commands.Context, hours: float):
+    @bot.tree.command(name="history", description="Scan large deposits for a past-hours window (no alerts).")
+    @app_commands.describe(hours="How many past hours to scan (e.g. 24).")
+    async def historical_report(interaction: discord.Interaction, hours: float):
         """
         Fetch historical large deposit reports (≥ FLAG_THRESHOLD) for the past specified number of hours.
         This command does NOT trigger alerts or pause automation.
-        Usage: !history 24
+        Usage: /history 24
         """
+        await interaction.response.defer()
+        ctx = InteractionCtx(interaction)
         if hours <= 0:
             await ctx.send("❌ Invalid time range. Please enter a positive number of hours.")
             return
@@ -148,14 +161,17 @@ def register_boring_commands(
 
     # ---------------- DEPOSITS CSV ----------------
 
-    @bot.command(name="deposits")
-    async def export_all_deposits_csv(ctx: commands.Context, hours: float):
+    @bot.tree.command(name="deposits", description="Export ALL deposits in a past-hours window to CSV.")
+    @app_commands.describe(hours="How many past hours of deposits to export (e.g. 24).")
+    async def export_all_deposits_csv(interaction: discord.Interaction, hours: float):
         """
         Fetches ALL deposits to the staking contract in the last `hours` hours,
         writes them to a CSV (TxHash, Address, Amount, RunningTotal),
         and sends that CSV as an attachment in Discord.
-        Usage: !deposits 24
+        Usage: /deposits 24
         """
+        await interaction.response.defer()
+        ctx = InteractionCtx(interaction)
         if hours <= 0:
             await ctx.send("❌ Invalid time range. Please enter a positive number of hours.")
             return

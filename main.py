@@ -12,23 +12,36 @@ from commands.hot import register_hot_commands
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from discord.ext import commands, tasks
+from discord import app_commands
 
 # Load environment variables
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 SAFE_ADDRESS = os.getenv("SAFE_ADDRESS")
 
-# Initialize the Discord bot
-intents = discord.Intents.default()
-intents.guilds = True
-intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)  # Disables default help
-
 # Hardcoded Guild ID, channel ID. # Add duplicate identical lines underneith for addiotnal guilds and channels.
 designated_channels = {
     885764705526882335: 911280330567208971,  #beets
     # 1458036437911077030: 1458036438359605251, #test
 }
+
+
+class GatedTree(app_commands.CommandTree):
+    """Restrict slash commands to each guild's designated channel (single gate for all commands)."""
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        gid = interaction.guild_id
+        if gid in designated_channels and interaction.channel_id != designated_channels[gid]:
+            await interaction.response.send_message(
+                "⚠️ Commands can only be used in the designated channel.", ephemeral=True
+            )
+            return False
+        return True
+
+
+# Initialize the Discord bot. Slash commands only -> no message_content intent needed.
+intents = discord.Intents.default()
+intents.guilds = True
+bot = commands.Bot(command_prefix="!", intents=intents, tree_cls=GatedTree, help_command=None)
 
 # Daily report anchor (UTC)
 DAILY_REPORT_UTC_HOUR = 9
@@ -48,22 +61,18 @@ SONICSCAN_TX_URL = "https://sonicscan.org/tx/"
 @bot.event
 async def on_ready():
     print(f"Discord bot connected as {bot.user}")
+    # Push slash commands to each designated guild (guild sync is instant, unlike global).
+    try:
+        for gid in designated_channels:
+            guild = discord.Object(id=gid)
+            bot.tree.copy_global_to(guild=guild)
+            synced = await bot.tree.sync(guild=guild)
+            print(f"Synced {len(synced)} slash commands to guild {gid}")
+    except Exception as e:
+        print(f"Slash command sync failed: {e}")
     print("Bot is running and ready to accept commands!")
     # Start the periodic task when the bot is ready
     periodic_recheck.start()
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-
-    # Check if the message is in the designated channel for the guild
-    guild_id = message.guild.id
-    if guild_id in designated_channels:
-        if message.channel.id != designated_channels[guild_id]:
-            return  # Ignore messages from non-designated channels
-
-    await bot.process_commands(message)
 
 register_boring_commands(
     bot,

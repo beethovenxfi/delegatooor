@@ -1,5 +1,7 @@
 # commands/hot.py
+import discord
 from discord.ext import commands
+from helpers.discord_compat import InteractionCtx
 
 def register_hot_commands(
     bot: commands.Bot,
@@ -14,7 +16,7 @@ def register_hot_commands(
     execute_transaction,                     # callable -> dict | str (legacy)
 ):
     async def _run_execute_command(
-        ctx: commands.Context,
+        ctx,  # InteractionCtx adapter (exposes .send like the old commands.Context)
         *,
         initial_message: str,
         check_pause: bool,
@@ -154,44 +156,48 @@ def register_hot_commands(
 
     # ---- Command registrations ----
 
-    @bot.command(name="execute")
-    async def execute(ctx):
+    @bot.tree.command(name="execute", description="Execute lowest nonce. Respects pause state AND token balance.")
+    async def execute(interaction: discord.Interaction):
         """Execute lowest nonce. Respects pause state AND token balance."""
+        await interaction.response.defer()
         await _run_execute_command(
-            ctx,
+            InteractionCtx(interaction),
             initial_message="⚔️ Checking for executable transactions...",
             check_pause=True,
             check_balance=True,
             allow_no_data_branch=False,
         )
 
-    @bot.command(name="shikai")
-    async def force_execute(ctx):
+    @bot.tree.command(name="shikai", description="Execute lowest nonce, ignores pause state.")
+    async def force_execute(interaction: discord.Interaction):
         """Execute lowest nonce, ignores pause state."""
+        await interaction.response.defer()
         await _run_execute_command(
-            ctx,
+            InteractionCtx(interaction),
             initial_message="⚡ Overriding pause state, executing the lowest nonce transaction...",
             check_pause=False,
             check_balance=True,
             allow_no_data_branch=False,
         )
 
-    @bot.command(name="bankai")
-    async def force_execute_no_checks(ctx):
+    @bot.tree.command(name="bankai", description="Execute lowest nonce, ignores pause state AND token balance.")
+    async def force_execute_no_checks(interaction: discord.Interaction):
         """Execute lowest nonce, ignores pause state AND token balance."""
+        await interaction.response.defer()
         await _run_execute_command(
-            ctx,
+            InteractionCtx(interaction),
             initial_message="🔥 Overriding pause state AND token balance, executing the lowest nonce transaction...",
             check_pause=False,
             check_balance=False,
             allow_no_data_branch=False,
         )
 
-    @bot.command(name="shukai9000")
-    async def ultimate_force_execute(ctx):
+    @bot.tree.command(name="shukai9000", description="Ultimate execution weapon. Ignores ALL checks (pause, balance, data).")
+    async def ultimate_force_execute(interaction: discord.Interaction):
         """Ultimate command to execute the lowest nonce, ignoring all checks except signature count."""
+        await interaction.response.defer()
         await _run_execute_command(
-            ctx,
+            InteractionCtx(interaction),
             initial_message="💀 Unleashing ultimate power! Executing the lowest nonce transaction...",
             check_pause=False,
             check_balance=False,

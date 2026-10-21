@@ -51,11 +51,13 @@ def compose_full_report(
     signer_discord_map: SignerMap | None = None,
     ping_missing_signers: bool = True,
     include_headroom_warning: bool = True,
+    peg_section: str | None = None,
 ) -> str:
     """
     Build + format the report.
     Set ping_missing_signers=False in other functions to omit <@discord_id> mentions.
     Set include_headroom_warning=False to omit the headroom warning message.
+    Pass peg_section (from helpers.peg_monitor.build_peg_section) to append the stS/S rate block.
     """
     if signer_discord_map is None:
         signer_discord_map = {
@@ -95,6 +97,10 @@ def compose_full_report(
 
     # 2) Format report
     full_report = format_transaction_report(payload)
+
+    # 2b) stS/S peg section
+    if peg_section:
+        full_report += "\n" + peg_section
 
     # 3) Headroom warning
     if include_headroom_warning:

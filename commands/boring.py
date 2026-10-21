@@ -16,6 +16,7 @@ def register_boring_commands(
     split_long_message,                      # from helpers.deposit_monitor
     compose_full_report,                     # from helpers.report_builder
     get_staking_balance,                     # from helpers.staking_contract
+    build_peg_section,                       # from helpers.peg_monitor
     fetch_recent_transactions,               # from helpers.fetch_transactions
     decode_hex_data,                         # from helpers.decode_hex
     get_function_name,                       # from helpers.decode_hex
@@ -97,8 +98,12 @@ def register_boring_commands(
             transactions = filter_and_sort_pending_transactions(transactions_all)
             print(f"Pending transactions found: {len(transactions)}")
 
+            # stS/S peg check (pings on discount >= threshold)
+            peg_section, peg_alert = await asyncio.to_thread(build_peg_section, True)
+            print(f"Peg check complete. Alert triggered: {peg_alert}")
+
             if not transactions:
-                await ctx.send(deposit_report_message + "\n\n📌 No pending transactions found.")
+                await ctx.send(peg_section + "\n\n" + deposit_report_message + "\n\n📌 No pending transactions found.")
                 return
 
             # Build consolidated report (no signer pings in !report)
@@ -110,6 +115,7 @@ def register_boring_commands(
                 filter_and_sort_pending_transactions=filter_and_sort_pending_transactions,
                 ping_missing_signers=False,
                 include_headroom_warning=False,
+                peg_section=peg_section,
             )
 
             # Always include the deposit outcome line

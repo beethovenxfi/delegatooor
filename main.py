@@ -7,6 +7,7 @@ from helpers.decode_hex import decode_hex_data, get_function_name
 from helpers.execute_transaction import fetch_transaction_by_nonce, execute_transaction
 from helpers.report_builder import compose_full_report
 from helpers.deposit_monitor import run_deposit_probe, split_long_message
+from helpers.peg_monitor import build_peg_section
 from commands.boring import register_boring_commands
 from commands.hot import register_hot_commands
 from dotenv import load_dotenv
@@ -80,6 +81,7 @@ register_boring_commands(
     split_long_message=split_long_message,
     compose_full_report=compose_full_report,
     get_staking_balance=get_staking_balance,
+    build_peg_section=build_peg_section,
     fetch_recent_transactions=fetch_recent_transactions,
     decode_hex_data=decode_hex_data,
     get_function_name=get_function_name,
@@ -119,6 +121,10 @@ async def periodic_recheck():
                 print("Deposit monitor triggered a pause due to a large deposit.")
             else:
                 print("Deposit monitor detected large deposit while already paused.")
+
+        # stS/S peg check: included in the daily report only (pings on discount >= threshold)
+        peg_section, peg_alert = await asyncio.to_thread(build_peg_section, True)
+        print(f"Peg check complete. Alert triggered: {peg_alert}")
 
         # Fetch staking contract balance
         staking_balance = await asyncio.to_thread(get_staking_balance)
@@ -188,6 +194,7 @@ async def periodic_recheck():
             get_function_name=get_function_name,
             filter_and_sort_pending_transactions=filter_and_sort_pending_transactions,
             ping_missing_signers=True,  # ping signers in daily report.
+            peg_section=peg_section,
         )
 
         # "Periodic Recheck Report" header

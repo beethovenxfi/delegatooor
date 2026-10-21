@@ -41,6 +41,9 @@ def format_transaction_report(result, header=None):
 
 SignerMap = Dict[str, int]
 
+# Only these signers get pinged for missing signatures (ardo, decentralix, netrim).
+PING_SIGNER_IDS = {232514597200855040, 538717564067381249, 258369063124860928}
+
 def compose_full_report(
     *,
     transactions: List[Dict[str, Any]],
@@ -126,7 +129,7 @@ def compose_full_report(
         if tx["signature_count"] < tx["confirmations_required"]:
             signed_addresses = {conf["owner"] for conf in tx["confirmations"]}
             for address, discord_id in signer_discord_map.items():
-                if address not in signed_addresses:
+                if address not in signed_addresses and discord_id in PING_SIGNER_IDS:
                     missing_signatures.setdefault(discord_id, []).append(tx["nonce"])
 
     if missing_signatures and ping_missing_signers:

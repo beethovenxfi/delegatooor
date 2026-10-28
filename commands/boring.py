@@ -114,7 +114,6 @@ def register_boring_commands(
                 get_function_name=get_function_name,
                 filter_and_sort_pending_transactions=filter_and_sort_pending_transactions,
                 ping_missing_signers=False,
-                include_headroom_warning=False,
                 peg_section=peg_section,
             )
 

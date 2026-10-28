@@ -8,6 +8,8 @@ from helpers.execute_transaction import fetch_transaction_by_nonce, execute_tran
 from helpers.report_builder import compose_full_report
 from helpers.deposit_monitor import run_deposit_probe, split_long_message
 from helpers.peg_monitor import build_peg_section
+from helpers.delegation_proposer import refill_delegation_queue
+from helpers.report_builder import PING_SIGNER_IDS
 from commands.boring import register_boring_commands
 from commands.hot import register_hot_commands
 from dotenv import load_dotenv
@@ -74,6 +76,8 @@ async def on_ready():
     print("Bot is running and ready to accept commands!")
     # Start the periodic task when the bot is ready
     periodic_recheck.start()
+    if not delegation_refill.is_running():
+        delegation_refill.start()
 
 register_boring_commands(
     bot,
@@ -266,7 +270,7 @@ async def periodic_recheck():
                                         break
                                     await asyncio.sleep(1)
 
-                        # After 3 failures, pause and ping same IDs as >100k alert
+                        # After 3 failures, pause and ping
                         paused = True
                         await broadcast_message(
                             "🚨 **Transaction Reverted Alert** 🚨\n"
@@ -311,6 +315,26 @@ async def periodic_recheck():
                         "### Periodic Recheck Report ###\n\nDaily report failed to build; check logs."
                     )
                 LAST_DAILY_REPORT_DATE = today
+
+@tasks.loop(hours=1)
+async def delegation_refill():
+    """Top up the Safe queue with delegate txs when it runs low and ping the signers."""
+    print("Checking delegation queue...")
+    try:
+        proposed, error = await asyncio.to_thread(refill_delegation_queue)
+    except Exception as e:
+        print(f"Error during delegation refill: {e}")
+        await broadcast_message(f"Error during delegation refill: {e}")
+        return
+
+    if proposed:
+        lines = [f"🧾 Proposed {len(proposed)} new delegation transactions to the Safe:"]
+        lines += [f"- **Nonce {p['nonce']}**: {p['amount']:,} S → validator {p['validator_id']}" for p in proposed]
+        lines.append(" ".join(f"<@{discord_id}>" for discord_id in sorted(PING_SIGNER_IDS)) + " please sign.")
+        lines.append(f"<https://app.safe.global/transactions/queue?safe=sonic:{SAFE_ADDRESS}>")
+        await broadcast_message("\n".join(lines))
+    if error:
+        await broadcast_message(f"⚠️ Delegation refill stopped after {len(proposed)} proposals: {error}")
 
 async def broadcast_message(message):
     """Broadcast a message to all servers the bot is in."""

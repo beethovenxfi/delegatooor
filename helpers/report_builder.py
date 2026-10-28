@@ -53,13 +53,11 @@ def compose_full_report(
     filter_and_sort_pending_transactions: Callable[[List[Dict[str, Any]]], List[Dict[str, Any]]],
     signer_discord_map: SignerMap | None = None,
     ping_missing_signers: bool = True,
-    include_headroom_warning: bool = True,
     peg_section: str | None = None,
 ) -> str:
     """
     Build + format the report.
     Set ping_missing_signers=False in other functions to omit <@discord_id> mentions.
-    Set include_headroom_warning=False to omit the headroom warning message.
     Pass peg_section (from helpers.peg_monitor.build_peg_section) to append the stS/S rate block.
     """
     if signer_discord_map is None:
@@ -105,25 +103,7 @@ def compose_full_report(
     if peg_section:
         full_report += "\n" + peg_section
 
-    # 3) Headroom warning
-    if include_headroom_warning:
-        total_pending_tokens = sum(
-            float((decode_hex_data(tx["data"]) or {}).get("amountInTokens", 0.0))
-            for tx in pending if tx.get("data")
-        )
-        total_available_tokens = total_pending_tokens - float(staking_balance)
-
-        # Headroom message
-        if total_available_tokens < 100_000:
-            full_report += (
-                "\n\n"
-                f"⚠️ **Warning:** The token staking headroom (total pending - staking contract balance) "
-                f"has dropped below 100,000.\n"
-                f"**Current Headroom:** {total_available_tokens} S tokens\n"
-                f"<@538717564067381249> please queue up more transactions."
-            )
-
-    # 4) Missing signatures. Now respects ping_missing_signers bool
+    # 3) Missing signatures. Now respects ping_missing_signers bool
     missing_signatures: Dict[int, List[int]] = {}
     for tx in pending:
         if tx["signature_count"] < tx["confirmations_required"]:

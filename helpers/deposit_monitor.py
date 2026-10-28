@@ -13,7 +13,7 @@ MAX_RETRIES = 5
 INITIAL_DELAY = 1  # API rate limit handling
 REQUEST_TIMEOUT = 5  # Limit API request timeouts to 5s max
 DECIMALS = 10**18  # Convert wei to human-readable format
-FLAG_THRESHOLD = 100000  # Flag deposits ≥ 100,000 S tokens
+FLAG_THRESHOLD = 500000  # Flag deposits ≥ 500,000 S tokens
 MAX_MESSAGE_LENGTH = 2000 # Split long discord messages into 2000-character chunks
 PERSISTENCE_FILE = "./last_scanned_block.json"  # /data is the mounted volume
 
@@ -165,7 +165,7 @@ def check_large_deposits_with_block(start_block=None):
             )
 
     if alert_triggered:
-        message = "\n\n".join(messages) + "\n\nAutomated executions are now paused. Please investigate <@538717564067381249> and resume automation when satisfied."
+        message = "\n\n".join(messages) + "\n\nAutomated executions are now paused. Please investigate and resume automation when satisfied."
         return True, message, last_block_scanned
     else:
         return False, "message", last_block_scanned
